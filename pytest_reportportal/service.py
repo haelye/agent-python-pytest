@@ -432,9 +432,12 @@ class PyTestServiceClass(with_metaclass(Singleton, object)):
                 if marker and marker.args else keyword
 
         try:
-            tags = [get_marker_value(item, k) for k in item.keywords
-                    if item.get_closest_marker(k) is not None
-                    and k not in self.ignored_tags]
+            if hasattr(item, 'cls'):
+                tags = [k.name for k in item.cls.pytestmark if k is not None and k not in self.ignored_tags]
+            else:
+                tags = [get_marker_value(item, k) for k in item.keywords
+                        if item.get_closest_marker(k) is not None
+                        and k not in self.ignored_tags]
         except AttributeError:
             # pytest < 3.6
             tags = [get_marker_value(item, k) for k in item.keywords
