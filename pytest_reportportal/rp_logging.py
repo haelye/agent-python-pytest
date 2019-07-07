@@ -102,7 +102,6 @@ class RPLogHandler(logging.Handler):
                 )
 
 
-@contextmanager
 def patching_logger_class():
     logger_class = logging.getLoggerClass()
     original_log = logger_class._log
@@ -145,8 +144,7 @@ def patching_logger_class():
             logger_class._log = wrap_log(logger_class._log)
             logger_class.makeRecord = wrap_makeRecord(logger_class.makeRecord)
             logger_class._patched = True
-        yield
 
-    finally:
+    except Exception:
         logger_class._log = original_log
         logger_class.makeRecord = original_makeRecord

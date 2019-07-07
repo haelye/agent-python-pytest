@@ -1,11 +1,12 @@
 import cgi
-import pytest
 import logging
 
+import pytest
 
 try:
     # This try/except can go away once we support pytest >= 3.3
     import _pytest.logging
+
     PYTEST_HAS_LOGGING_PLUGIN = True
     from .rp_logging import RPLogHandler, patching_logger_class
 except ImportError:
@@ -32,10 +33,9 @@ class RPReportListener(object):
         self.PyTestService.start_pytest_item(item)
         if PYTEST_HAS_LOGGING_PLUGIN:
             # This check can go away once we support pytest >= 3.3
-            with patching_logger_class():
-                with _pytest.logging.catching_logs(self._log_handler,
-                                                   level=self._log_level):
-                    yield
+            patching_logger_class()
+            with _pytest.logging.catching_logs(self._log_handler, level=self._log_level):
+                yield
         else:
             yield
         self.PyTestService.finish_pytest_item(item, self.result or 'SKIPPED', self.issue or None)
@@ -75,7 +75,6 @@ class RPReportListener(object):
                 item_result = 'FAILED'
                 self._add_issue_info(item, report)
             self.result = item_result
-
 
     def _add_issue_info(self, item, report):
 
