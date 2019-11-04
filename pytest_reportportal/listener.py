@@ -43,8 +43,10 @@ class RPReportListener(object):
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item):
         report = (yield).get_result()
+        is_failed_teardown_after_failed_test = report.when == 'teardown' and self.result != 'PASSED' and \
+                                               not report.passed
 
-        if report.longrepr:
+        if report.longrepr and not is_failed_teardown_after_failed_test:
             self.PyTestService.post_log(
                 # Used for support python 2.7
                 cgi.escape(report.longreprtext),
@@ -65,7 +67,7 @@ class RPReportListener(object):
                 self.result = 'SKIPPED'
                 self._add_issue_info(item, report)
 
-        if report.when == 'call':
+        elif report.when == 'call':
             if report.passed:
                 item_result = 'PASSED'
             elif report.skipped or item.get_marker('issue'):
@@ -74,6 +76,11 @@ class RPReportListener(object):
             else:
                 item_result = 'FAILED'
                 self._add_issue_info(item, report)
+            self.result = item_result
+
+        elif report.when == 'teardown' and self.result == 'PASSED' and not report.passed:
+            item_result = 'FAILED'
+            self._add_issue_info(item, report)
             self.result = item_result
 
     def _add_issue_info(self, item, report):
@@ -112,5 +119,5 @@ class RPReportListener(object):
         if issue_type and self.PyTestService.issue_types and (issue_type in self.PyTestService.issue_types):
             self.issue['issue_type'] = self.PyTestService.issue_types[issue_type]
             # self.issue['ignoreAnalyzer'] = True ???
-        elif (report.when == 'setup') and report.skipped:
+        elif report.skipped:
             self.issue['issue_type'] = 'NOT_ISSUE'
