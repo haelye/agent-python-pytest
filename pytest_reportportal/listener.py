@@ -39,6 +39,10 @@ class RPReportListener(object):
         else:
             yield
         self.PyTestService.finish_pytest_item(item, self.result or 'SKIPPED', self.issue or None)
+        session = item.session
+        is_exit_first = session.config.option.maxfail == 1
+        if self.result == 'FAILED' and is_exit_first:
+            self.PyTestService.finish_pytest_item(item, self.result, self.issue or None)
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item):
