@@ -68,14 +68,14 @@ class RPReportListener(object):
             elif report.skipped or item.get_marker('issue'):
                 # This happens when a testcase is marked "skip".  It will
                 # show in reportportal as not requiring investigation.
-                self.result = 'SKIPPED'
+                self.result = 'SKIPPED' if not hasattr(report, "wasxfail") else 'FAILED'
                 self._add_issue_info(item, report)
 
         elif report.when == 'call':
             if report.passed:
                 item_result = 'PASSED'
             elif report.skipped or item.get_marker('issue'):
-                item_result = 'SKIPPED'
+                item_result = 'SKIPPED' if not hasattr(report, "wasxfail") else 'FAILED'
                 self._add_issue_info(item, report)
             else:
                 item_result = 'FAILED'
